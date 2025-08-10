@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 7
+    },
+    "auditLog": "D:\\00.Project\\NeuroaAI\\server\\logs\\.de1d4c910ef753c13a04a060fadb6249a7ff3143-audit.json",
+    "files": [
+        {
+            "date": 1754842853739,
+            "name": "D:\\00.Project\\NeuroaAI\\server\\logs\\requests-2025-08-11.log",
+            "hash": "7191d955dc366a9388b2f3c6fbb301fabcac7a73f7e09bc02b1ebe7c307565ab"
+        }
+    ],
+    "hashType": "sha256"
+}

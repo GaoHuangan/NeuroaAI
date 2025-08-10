@@ -1,0 +1,10 @@
+2025-08-11 01:20:53 [INFO]: 🚀 Server started {"port":3000,"environment":"development"}
+2025-08-11 01:21:21 [INFO]: 🔐 Auth middleware started {"path":"/generate-image","method":"POST","userAgent":"PostmanRuntime/7.39.1"}
+2025-08-11 01:21:21 [INFO]: ✅ Token decoded successfully {"issuer":"https://glowing-gopher-38.clerk.accounts.dev","subject":"user_30ShjNMPwQEm5FjEtCApPCKLn89","tokenLength":964}
+2025-08-11 01:21:21 [INFO]: Token validation {"expired":false,"expiresAt":"2025-08-10T16:22:05.000Z","currentTime":"2025-08-10T16:21:21.972Z"}
+2025-08-11 01:21:21 [INFO]: 🎫 Using token data {"userId":"user_30ShjNMPwQEm5FjEtCApPCKLn89","plan":"Premium","isPremium":true}
+2025-08-11 01:21:21 [INFO]: 🖼️ Generate image request started {"userId":"user_30ShjNMPwQEm5FjEtCApPCKLn89","prompt":"china...","isPremium":true,"plan":"Premium"}
+2025-08-11 01:21:21 [INFO]: ✅ Premium user verified, calling AI for image description {"userId":"user_30ShjNMPwQEm5FjEtCApPCKLn89"}
+2025-08-11 01:21:24 [INFO]: ✅ AI response received for image description {"userId":"user_30ShjNMPwQEm5FjEtCApPCKLn89","contentLength":1493,"processingTime":2950}
+2025-08-11 01:21:26 [INFO]: ✅ Image description saved to database {"userId":"user_30ShjNMPwQEm5FjEtCApPCKLn89"}
+2025-08-11 01:21:26 [INFO]: ✅ Image generation completed successfully {"userId":"user_30ShjNMPwQEm5FjEtCApPCKLn89","totalTime":4093}

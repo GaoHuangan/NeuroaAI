@@ -1,0 +1,12 @@
+2025-08-11 01:20:53 🚀 Server started
+2025-08-11 01:21:21 📥 NEW REQUEST
+2025-08-11 01:21:21 🔐 Auth middleware started
+2025-08-11 01:21:21 ✅ Token decoded successfully
+2025-08-11 01:21:21 Token validation
+2025-08-11 01:21:21 🎫 Using token data
+2025-08-11 01:21:21 🖼️ Generate image request started
+2025-08-11 01:21:21 ✅ Premium user verified, calling AI for image description
+2025-08-11 01:21:24 ✅ AI response received for image description
+2025-08-11 01:21:26 ✅ Image description saved to database
+2025-08-11 01:21:26 ✅ Image generation completed successfully
+2025-08-11 01:21:26 📤 RESPONSE
