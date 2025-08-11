@@ -14,14 +14,17 @@
   "dependencies": {
     "@clerk/express": "^1.7.17",
     "@neondatabase/serverless": "^1.0.1",
+    "FormData": "^0.10.1",
     "axios": "^1.11.0",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "form-data": "^4.0.4",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "openai": "^5.12.2",
+    "pdfjs-dist": "^5.4.54",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
   },

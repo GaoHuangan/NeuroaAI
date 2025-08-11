@@ -1,6 +1,7 @@
 import express from "express";
-import { generateArticle, generateBlogTitles, generateImage } from "../controllers/aiController.js";
+import { generateArticle, generateBlogTitles, generateImage, resumeReview, removeImageObj, removeImageBac } from "../controllers/aiController.js";
 import { auth } from "../middleware/auth.js";
+import Upload from "../configs/multer.js";
 
 const aiRouter = express.Router();
 
@@ -10,13 +11,15 @@ aiRouter.use((req, res, next) => {
     next();
 });
 
-// 对所有 AI 路由应用认证
-aiRouter.use(auth);
 
 // 路由定义
-aiRouter.post("/generate-article", generateArticle);
-aiRouter.post("/generate-blog-titles", generateBlogTitles);  
-aiRouter.post("/generate-image", generateImage);
+aiRouter.post("/generate-article", auth, generateArticle);
+aiRouter.post("/generate-blog-titles", auth, generateBlogTitles);
+aiRouter.post("/generate-image", auth, generateImage);
+aiRouter.post("/remove-object", auth, Upload.single("image"), removeImageObj);
+aiRouter.post("/remove-background", auth, Upload.single("image"), removeImageBac);
+aiRouter.post("/resume-review", auth, Upload.single("resume"), resumeReview);
+
 
 // 测试路由
 aiRouter.get('/test', (req, res) => {

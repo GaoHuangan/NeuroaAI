@@ -10,3 +10,40 @@
 2025-08-11 01:21:26 ✅ Image description saved to database
 2025-08-11 01:21:26 ✅ Image generation completed successfully
 2025-08-11 01:21:26 📤 RESPONSE
+2025-08-11 02:05:49 🚀 Server started
+2025-08-11 12:39:43 🚀 Server started
+2025-08-11 12:40:05 📥 NEW REQUEST
+2025-08-11 12:40:05 🔐 Auth middleware started
+2025-08-11 12:40:05 ✅ Token decoded successfully
+2025-08-11 12:40:05 Token validation
+2025-08-11 12:40:05 🎫 Using token data
+2025-08-11 12:40:05 🖼️ Generate image request started
+2025-08-11 12:40:05 ✅ Premium user verified, calling AI for image description
+2025-08-11 12:40:05 ❌ Generate image error
+2025-08-11 12:40:05 📤 RESPONSE
+2025-08-11 13:00:23 🚀 Server started
+2025-08-11 13:00:44 📥 NEW REQUEST
+2025-08-11 13:00:44 🔐 Auth middleware started
+2025-08-11 13:00:44 ✅ Token decoded successfully
+2025-08-11 13:00:44 Token validation
+2025-08-11 13:00:44 🎫 Using token data
+2025-08-11 13:00:44 🖼️ Generate image request started
+2025-08-11 13:00:44 ✅ Premium user verified, calling AI for image description
+2025-08-11 13:00:44 ❌ Generate image error
+2025-08-11 13:00:44 📤 RESPONSE
+2025-08-11 13:02:57 🚀 Server started
+2025-08-11 13:02:58 📥 NEW REQUEST
+2025-08-11 13:02:58 🔐 Auth middleware started
+2025-08-11 13:02:58 ✅ Token decoded successfully
+2025-08-11 13:02:58 Token validation
+2025-08-11 13:02:58 🎫 Using token data
+2025-08-11 13:02:58 🖼️ Generate image request started
+2025-08-11 13:02:58 ✅ Premium user verified, calling AI for image description
+2025-08-11 13:03:02 ✅ Image generated successfully from ClipDrop API
+2025-08-11 13:03:06 ✅ Image uploaded to Cloudinary successfully
+2025-08-11 13:03:08 ✅ Image saved to database
+2025-08-11 13:03:08 ✅ Image generation completed successfully
+2025-08-11 13:03:08 📤 RESPONSE
+2025-08-11 14:19:13 🚀 Server started
+2025-08-11 21:20:25 🚀 Server started
+2025-08-11 23:33:59 🚀 Server started
