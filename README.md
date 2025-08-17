@@ -1,162 +1,162 @@
-# NeuroaAI - AI Content Generation Platform
+# 🚀 NeuroaAI - AI Content Generation Platform
 
-A full-stack AI-powered content generation platform built with React and Node.js.
+A modern, full-stack AI-powered content generation platform built with React and Node.js, featuring secure authentication and powerful AI capabilities.
 
-## 🚀 Features
-- Express.js backend with modular routing
-- AI-powered content generation via Gemini (OpenAI-compatible API)
-- User authentication and authorization with Clerk
-- PostgreSQL database integration (Neon)
-- Winston + Daily Rotate File logging (console + rotating files)
-- Secure, auth-protected AI routes
+![NeuroaAI Banner](https://via.placeholder.com/1200x400/1e293b/ffffff?text=NeuroaAI+AI+Content+Generation)  
+*[Add your project banner/screenshot here]*
 
-## 🧩 Tech Stack
-- Frontend: React, React Router, Clerk (client)
-- Backend: Node.js, Express, Clerk (server), Winston
-- AI: Google Gemini (OpenAI-compatible endpoint)
-- DB: PostgreSQL (Neon), `postgres`/`neon` (via `sql` tagged template)
+## ✨ Features
 
-## 📁 Project Structure
+- **AI-Powered Content Generation**
+  - Generate high-quality articles, stories, and more
+  - Support for multiple content types and formats
+  - Customizable output length and style
+
+- **User Management**
+  - Secure authentication with Clerk
+  - Role-based access control
+  - User profile management
+
+- **Modern Tech Stack**
+  - React 18 with Vite for blazing fast frontend
+  - Express.js backend with RESTful APIs
+  - PostgreSQL database with Neon serverless
+  - Google Gemini AI integration
+
+- **Developer Friendly**
+  - Comprehensive logging with Winston
+  - Environment-based configuration
+  - API documentation
+  - Rate limiting and request validation
+
+## �️ Tech Stack
+
+| Category        | Technologies                                                                 |
+|-----------------|-----------------------------------------------------------------------------|
+| **Frontend**    | React 18, Vite, Tailwind CSS, React Router, Clerk                           |
+| **Backend**     | Node.js, Express.js, PostgreSQL (Neon)                                      |
+| **AI**          | Google Gemini API                                                           |
+| **Auth**        | Clerk Authentication                                                        |
+| **DevOps**      | Vite, Winston, dotenv                                                      |
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm/yarn
+- PostgreSQL database (local or Neon)
+- Google Gemini API key
+- Clerk account and API keys
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/NeuroaAI.git
+   cd NeuroaAI
+   ```
+
+2. **Set up environment variables**
+   Create `.env` files in both `client/` and `server/` directories:
+   
+   `server/.env`:
+   ```env
+   PORT=3000
+   NODE_ENV=development
+   DATABASE_URL=your_postgres_connection_string
+   CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+   CLERK_SECRET_KEY=your_clerk_secret_key
+   GEMINI_API_KEY=your_gemini_api_key
+   ```
+
+   `client/.env`:
+   ```env
+   VITE_API_BASE_URL=http://localhost:3000
+   VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+   ```
+
+3. **Install dependencies**
+   ```bash
+   # Install server dependencies
+   cd server
+   npm install
+   
+   # Install client dependencies
+   cd ../client
+   npm install
+   ```
+
+4. **Run the application**
+   In separate terminals:
+   ```bash
+   # Terminal 1 - Start the server
+   cd server
+   npm run dev
+   
+   # Terminal 2 - Start the client
+   cd ../client
+   npm run dev
+   ```
+
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:3000
+
+## � API Documentation
+
+### Authentication
+All protected routes require a valid JWT token in the Authorization header:
 ```
-NeuroaAI/
-├── client/                     # React app
-├── server/                     # Node.js server
-│   ├── controllers/            # Route controllers
-│   ├── middleware/             # Auth and other middleware
-│   ├── routes/                 # Express routers
-│   ├── configs/
-│   │   ├── db.js               # Database client (not shown here)
-│   │   └── logger.js           # Winston logger
-│   ├── logs/                   # Rotating log files (gitignored)
-│   ├── server.js               # App entry
-│   └── .env                    # Server env (gitignored)
-├── README.md
-└── package.json
-```
-
-## 🔑 Environment Variables (server/.env)
-Required:
-- `DATABASE_URL` — PostgreSQL connection string
-- `CLERK_PUBLISHABLE_KEY` — Clerk publishable key
-- `CLERK_SECRET_KEY` — Clerk secret key
-- `GEMINI_API_KEY` — Google Generative Language API key
-
-Optional:
-- `NODE_ENV` — `development` | `production`
-- `PORT` — default `3000`
-- `LOG_LEVEL` — default `info` (dev elevates to `debug`)
-- `MAX_FREE_USAGE` — default `10` (free plan requests limit)
-
-Security notes:
-- Do NOT store short-lived JWTs in `.env`.
-- `.env` is server-only; keep it out of version control (already gitignored).
-
-## ▶️ Run Locally
-1) Install deps (from repo root or `server/` and `client/` respectively):
-```
-cd server && npm install
-cd ../client && npm install
-```
-2) Start server (dev):
-```
-cd server
-npm run dev
-```
-3) Start client:
-```
-cd ../client
-npm run dev
-```
-Server default: http://localhost:3000  Client default: http://localhost:5173
-
-## 🔐 Authentication
-- Server uses Clerk middleware and protects `/api/ai/*` routes.
-- Frontend should retrieve a token with `useAuth().getToken()` and send it as `Authorization: Bearer <token>`.
-
-Minimal frontend example:
-```jsx
-import { useAuth, SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
-
-function CallApi() {
-  const { isSignedIn, getToken } = useAuth();
-  const call = async () => {
-    if (!isSignedIn) return alert('请先登录');
-    const token = await getToken();
-    const res = await fetch('http://localhost:3000/api/ai/generate-article', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ prompt: 'AI in healthcare', length: 300 })
-    });
-    console.log(await res.json());
-  };
-  return (
-    <>
-      <SignedIn><button onClick={call}>Call API</button></SignedIn>
-      <SignedOut><SignInButton /></SignedOut>
-    </>
-  );
-}
-```
-
-cURL testing with a JWT (Windows PowerShell):
-```powershell
-$TOKEN = "<YOUR_JWT>"
-curl -i http://localhost:3000/api/ai/test -H "Authorization: Bearer $TOKEN"
-
-curl -i -X POST http://localhost:3000/api/ai/generate-article `
-  -H "Authorization: Bearer $TOKEN" `
-  -H "Content-Type: application/json" `
-  -d '{"prompt":"AI in healthcare","length":300}'
-```
-
-Bash script (Git Bash/WSL) `test_ai.sh`:
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-HOST="${HOST:-http://localhost:3000}"
-TOKEN="<YOUR_JWT>"
-[[ -z "$TOKEN" || "$TOKEN" == "<YOUR_JWT>" ]] && { echo "Set TOKEN"; exit 1; }
-
-curl -i "$HOST/api/ai/test" -H "Authorization: Bearer $TOKEN"
+Authorization: Bearer <your_jwt_token>
 ```
 
-## 📡 API Endpoints
-Base: `/api/ai`
-- `POST /generate-article`
-  - body: `{ prompt: string, length: number }`
-  - auth: required
-  - returns: `{ success, data: { content, wordCount, usage } }`
+### Available Endpoints
 
-- `POST /generate-blog-titles`
-  - body: `{ prompt: string }`
-  - auth: required
-  - returns: `{ success, data: { content, usage } }`
+#### Content Generation
+- `POST /api/ai/generate` - Generate content based on prompt
+  ```json
+  {
+    "prompt": "Your content prompt here",
+    "length": 500,
+    "tone": "professional"
+  }
+  ```
 
-- `POST /generate-image` (Premium only)
-  - body: `{ prompt: string }`
-  - auth: required (Premium)
-  - returns: `{ success, data: { content, usage } }`
+#### User Management
+- `GET /api/user/profile` - Get current user profile
+- `PUT /api/user/profile` - Update user profile
 
-Notes:
-- For free users, requests are limited by `MAX_FREE_USAGE`. Responses include usage info.
+## 🔒 Security
 
-## 📝 Logging
-- Using `winston` + `winston-daily-rotate-file`.
-- Console logs in development; rotating files under `server/logs/`:
-  - `app-YYYY-MM-DD.log` — general logs
-  - `error-YYYY-MM-DD.log` — errors
-  - `requests-YYYY-MM-DD.log` — request traces
+- All API routes are protected by authentication middleware
+- Sensitive data is encrypted
+- Rate limiting is implemented for API endpoints
+- Input validation on all endpoints
 
-## 🛡️ Security & Best Practices
-- Never commit `.env` or JWTs to source control.
-- Always send the Clerk token via `Authorization: Bearer <token>`.
-- Remove or restrict any unauthenticated testing routes in production.
+## 🤝 Contributing
 
-## ❗ Troubleshooting
-- 401 Unauthorized with `x-clerk-auth-status: signed-out`:
-  - Not logged in on client, or missing/invalid `Authorization` header.
-- 403 on free plan routes:
-  - Free usage limit reached; upgrade to premium or adjust `MAX_FREE_USAGE` for testing.
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## � License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Clerk](https://clerk.com/) for authentication
+- [Google Gemini](https://ai.google.dev/) for AI capabilities
+- [Neon](https://neon.tech/) for PostgreSQL hosting
+
+---
+
+<div align="center">
+  Made with ❤️ by Your Name | [Website](https://yourwebsite.com) | [Twitter](https://twitter.com/yourhandle)
+</div>
 - AI 401/403:
   - Check `GEMINI_API_KEY` validity and quota.
 - DB errors:
