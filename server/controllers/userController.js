@@ -69,9 +69,9 @@ export const getPublishedCreations = async (req, res) => {
     const startTime = Date.now();
 
     try {
-        const currentUserId = req.userId || req.auth?.userId; // 可能未登录
+        const currentUserId = req.userId || req.auth?.userId;
 
-        logger.info('🔄 getPublishedCreations request');
+        logger.info('🔄 getPublishedCreations request', { currentUserId });
 
         // 修复：使用 publish 而不是 published
         const creations = await sql`
@@ -224,7 +224,8 @@ export const deleteCreation = async (req, res) => {
 
     try {
         const userId = req.userId || req.auth?.userId;
-        const { creationId } = req.params;
+        // **修复：使用 req.params.id 而不是 req.params.creationId**
+        const creationId = req.params.id;
 
         logger.info('🔄 deleteCreation request', { userId, creationId });
 
@@ -277,6 +278,79 @@ export const deleteCreation = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Failed to delete creation",
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        });
+    }
+};
+
+export const togglePublishCreation = async (req, res) => {
+    const startTime = Date.now();
+
+    try {
+        const userId = req.userId || req.auth?.userId;
+        const { creationId } = req.body;
+
+        if (!userId || !creationId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID and Creation ID are required"
+            });
+        }
+
+        // 验证创作所有权
+        const [creation] = await sql`
+            SELECT id, user_id, publish FROM creations WHERE id = ${creationId};
+        `;
+
+        if (!creation) {
+            return res.status(404).json({
+                success: false,
+                message: "Creation not found"
+            });
+        }
+
+        if (creation.user_id !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: "You can only modify your own creations"
+            });
+        }
+
+        // 切换发布状态
+        const newPublishStatus = !creation.publish;
+        
+        await sql`
+            UPDATE creations 
+            SET publish = ${newPublishStatus}
+            WHERE id = ${creationId};
+        `;
+
+        logger.info('✅ togglePublishCreation success', { 
+            userId, 
+            creationId, 
+            newStatus: newPublishStatus,
+            processingTime: Date.now() - startTime
+        });
+
+        return res.json({
+            success: true,
+            data: {
+                message: newPublishStatus ? "Creation published" : "Creation unpublished",
+                isPublished: newPublishStatus
+            }
+        });
+
+    } catch (error) {
+        logger.error('❌ togglePublishCreation error', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.userId,
+            processingTime: Date.now() - startTime
+        });
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to toggle publish status",
             error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
         });
     }

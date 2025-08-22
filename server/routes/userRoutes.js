@@ -3,7 +3,8 @@ import {
     getUserCreations,
     getPublishedCreations,
     toggleLikeCreation,
-    deleteCreation
+    deleteCreation,
+    togglePublishCreation
 } from "../controllers/userController.js";
 import { auth } from "../middleware/auth.js";
 
@@ -20,6 +21,7 @@ userRouter.get("/get-user-creations", auth, getUserCreations);
 userRouter.get("/get-published-creations", auth, getPublishedCreations);
 userRouter.post("/toggle-like-creation", auth, toggleLikeCreation);
 userRouter.delete("/delete-creation/:id", auth, deleteCreation);
+userRouter.post("/toggle-publish-creation", auth, togglePublishCreation);
 
 
 // 测试路由

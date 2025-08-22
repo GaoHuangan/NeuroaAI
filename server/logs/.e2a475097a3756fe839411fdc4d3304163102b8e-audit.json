@@ -14,6 +14,21 @@
             "date": 1755435177490,
             "name": "D:\\00.Project\\NeuroaAI\\server\\logs\\error-2025-08-17.log",
             "hash": "a86ea9fed42c3d3210564e88fcb24071791371ca92347296a646b267d38dcfdd"
+        },
+        {
+            "date": 1755611872231,
+            "name": "D:\\00.Project\\NeuroaAI\\server\\logs\\error-2025-08-19.log",
+            "hash": "ce2943224288461ff82bd13494bf65c70029e4111c2f166e78e21bfafd574de3"
+        },
+        {
+            "date": 1755872551072,
+            "name": "D:\\00.Project\\NeuroaAI\\server\\logs\\error-2025-08-22.log",
+            "hash": "278baaa61e68873ba7dc6257c52ce872fe0e8cca430938331552b082f124be4f"
+        },
+        {
+            "date": 1755878073219,
+            "name": "D:\\00.Project\\NeuroaAI\\server\\logs\\error-2025-08-23.log",
+            "hash": "7ba9b0cdacd1fb8c13e2dd798252eba9200012e5a99772e6fd15ab0eade9dc0e"
         }
     ],
     "hashType": "sha256"

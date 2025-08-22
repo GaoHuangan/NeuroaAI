@@ -6,7 +6,7 @@ import { v2 as cloudinary } from "cloudinary";
 import axios from "axios";
 import FormData from 'form-data';
 import fs from 'fs';
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 
 cloudinary.config({
@@ -14,8 +14,6 @@ cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const AI = new OpenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -36,7 +34,7 @@ export const generateArticle = async (req, res) => {
         });
 
         const userId = req.userId || req.auth?.userId;
-        
+
         // 检查 req.body 是否存在
         if (!req.body || typeof req.body !== 'object') {
             logger.error('❌ Invalid request body', {
@@ -72,9 +70,9 @@ export const generateArticle = async (req, res) => {
 
         // 验证输入
         if (!prompt || !length) {
-            logger.warn('❌ Missing required parameters', { 
-                userId, 
-                hasPrompt: !!prompt, 
+            logger.warn('❌ Missing required parameters', {
+                userId,
+                hasPrompt: !!prompt,
                 hasLength: !!length,
                 promptValue: prompt,
                 lengthValue: length
@@ -818,7 +816,7 @@ export const removeImageObj = async (req, res) => {
 };
 
 // **ADDED: Configure PDF.js worker**
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs-dist/legacy/build/pdf.worker.mjs';
 
 export const resumeReview = async (req, res) => {
     const startTime = Date.now();
@@ -881,31 +879,31 @@ export const resumeReview = async (req, res) => {
         try {
             const dataBuffer = fs.readFileSync(resume.path);
             const uint8Array = new Uint8Array(dataBuffer);
-            
+
             // **ADDED: Load PDF document using pdfjs-dist**
             const pdfDocument = await pdfjsLib.getDocument({ data: uint8Array }).promise;
-            
+
             // **ADDED: Extract text from each page**
             const maxPages = Math.min(pdfDocument.numPages, 5); // Limit to first 5 pages
-            
+
             for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
                 try {
                     const page = await pdfDocument.getPage(pageNum);
                     const textContent = await page.getTextContent();
-                    
+
                     const pageText = textContent.items
                         .map(item => item.str)
                         .join(' ');
-                    
+
                     resumeText += pageText + '\n';
-                    
+
                 } catch (pageError) {
-                    logger.warn(`Failed to extract text from page ${pageNum}`, { 
-                        error: pageError.message 
+                    logger.warn(`Failed to extract text from page ${pageNum}`, {
+                        error: pageError.message
                     });
                 }
             }
-            
+
             resumeText = resumeText.trim();
             // **WHY: pdfjs-dist is more stable and reliable than pdf-parse**
 
@@ -942,27 +940,47 @@ export const resumeReview = async (req, res) => {
         // Clean the extracted text
         resumeText = resumeText.replace(/\s+/g, ' ').trim();
 
-        // Enhanced AI prompt for better structured response
+        // **MODIFIED: Enhanced AI prompt for Markdown response**
         const prompt = `Please provide a comprehensive review of the following resume. 
-            Analyze it for:
-            1. Overall structure and formatting
-            2. Content quality and relevance
-            3. Skills and experience presentation
-            4. Areas for improvement
-            5. Specific recommendations
-            6. Overall score (0-100)
-            
-            Resume content:
-            ${resumeText}
-            
-            Please provide your response in the following JSON format:
-            {
-                "summary": "Brief overall assessment",
-                "strengths": ["strength1", "strength2", "strength3"],
-                "improvements": ["improvement1", "improvement2", "improvement3"],
-                "score": 85,
-                "detailed_feedback": "Detailed analysis and recommendations"
-            }`;
+    Analyze it for:
+    1. Overall structure and formatting
+    2. Content quality and relevance
+    3. Skills and experience presentation
+    4. Areas for improvement
+    5. Specific recommendations
+    6. Overall score (0-100)
+    
+    Resume content:
+    ${resumeText}
+    
+    Please provide your response in Markdown format with the following structure:
+    
+    # Resume Analysis Report
+    
+    ## Overall Score: [0-100]/100
+    
+    ## Summary
+    [Brief overall assessment]
+    
+    ## ✅ Strengths
+    - Strength 1
+    - Strength 2
+    - Strength 3
+    
+    ## ⚠️ Areas for Improvement
+    1. Improvement suggestion 1
+    2. Improvement suggestion 2
+    3. Improvement suggestion 3
+    
+    ## 📋 Detailed Feedback
+    [Detailed analysis and recommendations]
+    
+    ## 💡 Specific Recommendations
+    - Recommendation 1
+    - Recommendation 2
+    - Recommendation 3`;
+        // **WHY: Markdown format provides better readability and structure**
+
 
         const response = await AI.chat.completions.create({
             model: "gemini-2.0-flash-exp",
@@ -1018,14 +1036,14 @@ export const resumeReview = async (req, res) => {
             fileName: resume.originalname,
             totalTime: Date.now() - startTime
         });
-
+        // **MODIFIED: Return content as markdown string**
         return res.json({
             success: true,
             data: {
                 fileName: resume.originalname,
                 fileSize: resume.size,
                 fileType: resume.mimetype,
-                analysis: parsedContent,
+                analysis: content, // **CHANGED: Direct markdown string**
                 wordCount: resumeText.split(' ').length,
                 supportedFormats: ['application/pdf'],
                 usage: {
