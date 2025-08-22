@@ -12,49 +12,30 @@ const app = express();
 await connectCloudinary();
 
 app.use(cors());
-app.use(express.json());
-app.use(clerkMiddleware());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 请求日志中间件
+// 调试中间件 - 检查请求体解析
 app.use((req, res, next) => {
-    const startTime = Date.now();
-
-    logger.debug('📥 NEW REQUEST', {
-        method: req.method,
-        url: req.url,
-        path: req.path,
-        body: req.body,
-        contentType: req.headers['content-type'],
-        userAgent: req.headers['user-agent'],
-        ip: req.ip
-    });
-
-    // 记录响应
-    const originalSend = res.send;
-    res.send = function (data) {
-        logger.debug('📤 RESPONSE', {
+    if (req.url.includes('/generate-article')) {
+        logger.info('🔍 REQUEST BODY CHECK', {
             method: req.method,
             url: req.url,
-            statusCode: res.statusCode,
-            processingTime: Date.now() - startTime,
-            responseSize: data ? data.length : 0
+            hasBody: !!req.body,
+            bodyType: typeof req.body,
+            bodyKeys: req.body ? Object.keys(req.body) : [],
+            bodyContent: req.body,
+            contentType: req.headers['content-type'],
+            contentLength: req.headers['content-length']
         });
-        return originalSend.call(this, data);
-    };
-
+    }
     next();
 });
 
-// 根路由
-app.get('/', (req, res) => {
-    logger.info('Root route accessed');
-    res.send('Server is running');
-});
+app.use(clerkMiddleware());
 
-// AI 路由
+// 其余配置...
 app.use('/api/ai', aiRouter);
-
-// 用户路由
 app.use('/api/user', userRouter);
 
 const PORT = process.env.PORT || 3000;

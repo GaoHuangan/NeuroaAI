@@ -6,6 +6,7 @@ import { v2 as cloudinary } from "cloudinary";
 import axios from "axios";
 import FormData from 'form-data';
 import fs from 'fs';
+import * as pdfjsLib from 'pdfjs-dist';
 
 
 cloudinary.config({
@@ -14,6 +15,7 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const AI = new OpenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -24,7 +26,36 @@ export const generateArticle = async (req, res) => {
     const startTime = Date.now();
 
     try {
+        // 添加调试信息
+        logger.info('🔍 Generate article called', {
+            hasBody: !!req.body,
+            bodyType: typeof req.body,
+            bodyContent: req.body,
+            contentType: req.headers['content-type'],
+            method: req.method
+        });
+
         const userId = req.userId || req.auth?.userId;
+        
+        // 检查 req.body 是否存在
+        if (!req.body || typeof req.body !== 'object') {
+            logger.error('❌ Invalid request body', {
+                userId,
+                hasBody: !!req.body,
+                bodyType: typeof req.body,
+                contentType: req.headers['content-type']
+            });
+            return res.status(400).json({
+                success: false,
+                message: "Invalid request body. Expected JSON object.",
+                debug: {
+                    hasBody: !!req.body,
+                    bodyType: typeof req.body,
+                    contentType: req.headers['content-type']
+                }
+            });
+        }
+
         const { prompt, length } = req.body;
         const isPremium = req.isPremium || false;
         const plan = req.plan?.plan || 'Free';
@@ -41,14 +72,24 @@ export const generateArticle = async (req, res) => {
 
         // 验证输入
         if (!prompt || !length) {
-            logger.warn('❌ Missing required parameters', { userId, hasPrompt: !!prompt, hasLength: !!length });
+            logger.warn('❌ Missing required parameters', { 
+                userId, 
+                hasPrompt: !!prompt, 
+                hasLength: !!length,
+                promptValue: prompt,
+                lengthValue: length
+            });
             return res.status(400).json({
                 success: false,
-                message: "Prompt and length are required"
+                message: "Prompt and length are required",
+                received: {
+                    prompt: prompt || null,
+                    length: length || null
+                }
             });
         }
 
-        // 检查免费使用限制
+        // 其余代码保持不变...
         const maxUsage = parseInt(process.env.MAX_FREE_USAGE) || 10;
         if (!isPremium && freeUsage >= maxUsage) {
             logger.warn('❌ Free usage limit reached', {
@@ -93,9 +134,9 @@ export const generateArticle = async (req, res) => {
         // 保存到数据库
         try {
             await sql`
-                    INSERT INTO creations (user_id, prompt, type, content, created_at)
-                    VALUES (${userId}, ${prompt}, 'article', ${content}, NOW());
-                `;
+                INSERT INTO creations (user_id, prompt, type, content, created_at)
+                VALUES (${userId}, ${prompt}, 'article', ${content}, NOW());
+            `;
             logger.info('✅ Article saved to database', { userId });
         } catch (dbError) {
             logger.error('❌ Database save error', {
@@ -152,9 +193,14 @@ export const generateArticle = async (req, res) => {
         logger.error('❌ Generate article error', {
             error: error.message,
             stack: error.stack,
-            userId: req.userId,
+            userId: req.userId || req.auth?.userId,
             prompt: req.body?.prompt?.substring(0, 50),
-            processingTime: Date.now() - startTime
+            processingTime: Date.now() - startTime,
+            requestDetails: {
+                hasBody: !!req.body,
+                bodyType: typeof req.body,
+                contentType: req.headers['content-type']
+            }
         });
 
         return res.status(500).json({
@@ -771,6 +817,9 @@ export const removeImageObj = async (req, res) => {
     }
 };
 
+// **ADDED: Configure PDF.js worker**
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
 export const resumeReview = async (req, res) => {
     const startTime = Date.now();
 
@@ -794,13 +843,13 @@ export const resumeReview = async (req, res) => {
             });
         }
 
-        // 暂时只支持文本文件，避免 PDF 解析问题
-        const allowedTypes = ['text/plain'];
+        // Only allow PDF files
+        const allowedTypes = ['application/pdf'];
         if (!allowedTypes.includes(resume.mimetype)) {
             logger.warn('❌ Invalid file type', { userId, fileType: resume.mimetype });
             return res.status(400).json({
                 success: false,
-                message: "Currently only text files (.txt) are supported. PDF support will be added soon."
+                message: "Only PDF files are supported. Please upload a PDF resume."
             });
         }
 
@@ -827,27 +876,55 @@ export const resumeReview = async (req, res) => {
             filePath: resume.path
         });
 
-        // 读取文本文件
+        // **MODIFIED: Read PDF file using pdfjs-dist**
         let resumeText = '';
         try {
             const dataBuffer = fs.readFileSync(resume.path);
-            resumeText = dataBuffer.toString('utf-8');
+            const uint8Array = new Uint8Array(dataBuffer);
+            
+            // **ADDED: Load PDF document using pdfjs-dist**
+            const pdfDocument = await pdfjsLib.getDocument({ data: uint8Array }).promise;
+            
+            // **ADDED: Extract text from each page**
+            const maxPages = Math.min(pdfDocument.numPages, 5); // Limit to first 5 pages
+            
+            for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+                try {
+                    const page = await pdfDocument.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    
+                    const pageText = textContent.items
+                        .map(item => item.str)
+                        .join(' ');
+                    
+                    resumeText += pageText + '\n';
+                    
+                } catch (pageError) {
+                    logger.warn(`Failed to extract text from page ${pageNum}`, { 
+                        error: pageError.message 
+                    });
+                }
+            }
+            
+            resumeText = resumeText.trim();
+            // **WHY: pdfjs-dist is more stable and reliable than pdf-parse**
 
-            logger.info('✅ Resume content extracted', {
+            logger.info('✅ PDF resume content extracted', {
                 userId,
-                textLength: resumeText.length
+                textLength: resumeText.length,
+                pages: pdfDocument.numPages
             });
 
         } catch (parseError) {
-            logger.error('❌ Failed to parse resume file', {
+            logger.error('❌ Failed to parse PDF resume file', {
                 error: parseError.message,
                 userId,
                 fileName: resume.originalname
             });
-            throw new Error('Failed to read resume content. Please ensure the file is not corrupted.');
+            throw new Error('Failed to read PDF content. Please ensure the PDF is not password protected or corrupted.');
         }
 
-        // 清理临时文件
+        // Clean up temporary file
         try {
             fs.unlinkSync(resume.path);
             logger.info('✅ Temporary file cleaned up', { filePath: resume.path });
@@ -859,10 +936,13 @@ export const resumeReview = async (req, res) => {
         }
 
         if (!resumeText || resumeText.trim().length < 50) {
-            throw new Error('Resume content is too short or could not be extracted properly.');
+            throw new Error('Resume content is too short or could not be extracted properly. Please ensure your PDF contains readable text.');
         }
 
-        // 使用 AI 进行简历审核
+        // Clean the extracted text
+        resumeText = resumeText.replace(/\s+/g, ' ').trim();
+
+        // Enhanced AI prompt for better structured response
         const prompt = `Please provide a comprehensive review of the following resume. 
             Analyze it for:
             1. Overall structure and formatting
@@ -870,11 +950,19 @@ export const resumeReview = async (req, res) => {
             3. Skills and experience presentation
             4. Areas for improvement
             5. Specific recommendations
+            6. Overall score (0-100)
             
             Resume content:
             ${resumeText}
             
-            Please provide constructive feedback and actionable suggestions.`;
+            Please provide your response in the following JSON format:
+            {
+                "summary": "Brief overall assessment",
+                "strengths": ["strength1", "strength2", "strength3"],
+                "improvements": ["improvement1", "improvement2", "improvement3"],
+                "score": 85,
+                "detailed_feedback": "Detailed analysis and recommendations"
+            }`;
 
         const response = await AI.chat.completions.create({
             model: "gemini-2.0-flash-exp",
@@ -883,7 +971,7 @@ export const resumeReview = async (req, res) => {
                 content: prompt,
             }],
             temperature: 0.7,
-            max_tokens: 2000,
+            max_tokens: 3000,
         });
 
         const content = response.choices[0]?.message?.content;
@@ -892,18 +980,31 @@ export const resumeReview = async (req, res) => {
             throw new Error('No review content received from AI');
         }
 
+        // Try to parse JSON response
+        let parsedContent;
+        try {
+            parsedContent = JSON.parse(content);
+        } catch (jsonError) {
+            // Fallback for non-JSON response
+            parsedContent = {
+                summary: "AI analysis completed",
+                detailed_feedback: content,
+                score: null
+            };
+        }
+
         logger.info('✅ AI review generated successfully', {
             userId,
             reviewLength: content.length,
             processingTime: Date.now() - startTime
         });
 
-        // 保存到数据库
+        // Save to database
         try {
             await sql`
-                    INSERT INTO creations (user_id, prompt, type, content, created_at)
-                    VALUES (${userId}, ${`Resume review for ${resume.originalname}`}, 'resume_review', ${content}, NOW());
-                `;
+                INSERT INTO creations (user_id, prompt, type, content, created_at)
+                VALUES (${userId}, ${`Resume review for ${resume.originalname}`}, 'resume_review', ${content}, NOW());
+            `;
             logger.info('✅ Resume review result saved to database', { userId });
         } catch (dbError) {
             logger.error('❌ Database save error for resume review', {
@@ -923,10 +1024,10 @@ export const resumeReview = async (req, res) => {
             data: {
                 fileName: resume.originalname,
                 fileSize: resume.size,
-                review: content,
-                wordCount: content.split(' ').length,
-                supportedFormats: ['text/plain'],
-                note: "PDF support will be added in a future update",
+                fileType: resume.mimetype,
+                analysis: parsedContent,
+                wordCount: resumeText.split(' ').length,
+                supportedFormats: ['application/pdf'],
                 usage: {
                     isPremium
                 }
@@ -934,7 +1035,7 @@ export const resumeReview = async (req, res) => {
         });
 
     } catch (error) {
-        // 清理可能的临时文件
+        // Clean up possible temporary files
         if (req.file?.path) {
             try {
                 fs.unlinkSync(req.file.path);
@@ -955,12 +1056,14 @@ export const resumeReview = async (req, res) => {
 
         let errorMessage = "Failed to review resume";
 
-        if (error.message.includes('read')) {
-            errorMessage = "Failed to read resume file. Please check the file format.";
+        if (error.message.includes('read') || error.message.includes('PDF')) {
+            errorMessage = "Failed to read PDF file. Please ensure it's not password protected.";
         } else if (error.message.includes('content')) {
             errorMessage = "Resume content could not be extracted properly.";
         } else if (error.message.includes('AI') || error.message.includes('API')) {
             errorMessage = "AI service temporarily unavailable.";
+        } else if (error.message.includes('password')) {
+            errorMessage = "Cannot read password-protected PDF files.";
         }
 
         return res.status(500).json({
